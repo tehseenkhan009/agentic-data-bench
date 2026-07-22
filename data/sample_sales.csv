@@ -1,0 +1,25 @@
+date,category,region,units_sold,revenue
+2024-01-15,Electronics,North,120,23988.00
+2024-02-15,Electronics,North,135,26973.00
+2024-03-15,Electronics,North,150,29985.00
+2024-04-15,Electronics,North,210,41979.00
+2024-05-15,Electronics,North,265,52967.00
+2024-06-15,Electronics,North,310,61938.00
+2024-01-15,Home & Garden,South,80,4792.00
+2024-02-15,Home & Garden,South,85,5091.00
+2024-03-15,Home & Garden,South,90,5391.00
+2024-04-15,Home & Garden,South,95,5691.00
+2024-05-15,Home & Garden,South,88,5271.00
+2024-06-15,Home & Garden,South,92,5511.00
+2024-01-15,Apparel,East,300,8997.00
+2024-02-15,Apparel,East,310,9297.00
+2024-03-15,Apparel,East,295,8847.00
+2024-04-15,Apparel,East,320,9597.00
+2024-05-15,Apparel,East,330,9897.00
+2024-06-15,Apparel,East,340,10197.00
+2024-01-15,Toys,West,60,1798.00
+2024-02-15,Toys,West,58,1738.00
+2024-03-15,Toys,West,65,1948.00
+2024-04-15,Toys,West,240,7192.00
+2024-05-15,Toys,West,70,2098.00
+2024-06-15,Toys,West,75,2248.00
