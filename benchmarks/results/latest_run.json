@@ -1,0 +1,24 @@
+[
+  {
+    "model": "gpt-4o-mini",
+    "success": true,
+    "halted_reason": null,
+    "n_retries_total": 1,
+    "latency_seconds": 10.15,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "estimated_cost_usd": 0.0,
+    "mentions_expected_category": true
+  },
+  {
+    "model": "gpt-4o",
+    "success": false,
+    "halted_reason": "Step 'For each 'category', perform a time series analysis to determine the revenue growth trend over time.' failed QA after 2 retries: ['execution_error: ImportError: __import__ not found']",
+    "n_retries_total": 3,
+    "latency_seconds": 12.33,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "estimated_cost_usd": 0.0,
+    "mentions_expected_category": false
+  }
+]
