@@ -15,6 +15,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 import pandas as pd
 
 from src.skills import code_execution
+from src.llm_usage import usage_from_response, add_usage
 
 SYSTEM_PROMPT = """You are the Analyst agent in a governed multi-agent data-analysis system.
 
@@ -34,9 +35,10 @@ class AnalystOutput:
     code: str
     execution: code_execution.ExecutionResult
     interpretation: str
+    usage: dict
 
 
-def _generate_code(llm: BaseChatModel, step: str, columns: list[str], feedback: str | None) -> str:
+def _generate_code(llm: BaseChatModel, step: str, columns: list[str], feedback: str | None) -> tuple[str, dict]:
     prompt = f"Dataframe columns: {columns}\n\nStep: {step}\n"
     if feedback:
         prompt += f"\nYour previous attempt was rejected for: {feedback}\nFix it and try again.\n"
@@ -48,13 +50,13 @@ def _generate_code(llm: BaseChatModel, step: str, columns: list[str], feedback: 
         code = code.split("\n", 1)[1] if "\n" in code else code
         if code.lower().startswith("python"):
             code = code.split("\n", 1)[1]
-    return code.strip()
+    return code.strip(), usage_from_response(response)
 
 
-def _interpret(llm: BaseChatModel, step: str, value) -> str:
+def _interpret(llm: BaseChatModel, step: str, value) -> tuple[str, dict]:
     prompt = f"Step: {step}\nComputed result: {value!r}\n\nGive a one-sentence, plain-language interpretation."
     response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content.strip()
+    return response.content.strip(), usage_from_response(response)
 
 
 def analyze_step(
@@ -63,7 +65,11 @@ def analyze_step(
     df: pd.DataFrame,
     feedback: str | None = None,
 ) -> AnalystOutput:
-    code = _generate_code(llm, step, list(df.columns), feedback)
+    code, code_usage = _generate_code(llm, step, list(df.columns), feedback)
     execution = code_execution.run(code, df)
-    interpretation = _interpret(llm, step, execution.value) if execution.success else ""
-    return AnalystOutput(code=code, execution=execution, interpretation=interpretation)
+    if execution.success:
+        interpretation, interpret_usage = _interpret(llm, step, execution.value)
+    else:
+        interpretation, interpret_usage = "", {}
+    usage = add_usage(code_usage, interpret_usage)
+    return AnalystOutput(code=code, execution=execution, interpretation=interpretation, usage=usage)

@@ -7,8 +7,12 @@ only — no skill access, no code execution.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.language_models.chat_models import BaseChatModel
+
+from src.llm_usage import usage_from_response
 
 SYSTEM_PROMPT = """You are the Planner agent in a governed multi-agent data-analysis system.
 
@@ -25,7 +29,13 @@ Output format (strict): a numbered list, nothing else.
 """
 
 
-def plan(llm: BaseChatModel, question: str, columns: list[str]) -> list[str]:
+@dataclass
+class PlanResult:
+    steps: list[str]
+    usage: dict
+
+
+def plan(llm: BaseChatModel, question: str, columns: list[str]) -> PlanResult:
     prompt = (
         f"Dataframe columns: {columns}\n\n"
         f"User question: {question}\n\n"
@@ -39,4 +49,4 @@ def plan(llm: BaseChatModel, question: str, columns: list[str]) -> list[str]:
         cleaned = line.lstrip("0123456789.)- ").strip()
         if cleaned:
             steps.append(cleaned)
-    return steps
+    return PlanResult(steps=steps, usage=usage_from_response(response))

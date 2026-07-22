@@ -52,17 +52,17 @@ def _log(agent: str, action: str, details: dict) -> list[dict]:
 
 def build_graph(llm: BaseChatModel):
     def planner_node(state: AgentState) -> dict:
-        steps = planner.plan(llm, state["question"], list(state["df"].columns))
-        if not steps:
+        result = planner.plan(llm, state["question"], list(state["df"].columns))
+        if not result.steps:
             return {
                 "plan": [],
                 "halted_reason": "Planner determined the question cannot be answered from this dataset.",
-                "trace": _log("Planner", "plan", {"steps": steps, "halted": True}),
+                "trace": _log("Planner", "plan", {"steps": result.steps, "halted": True, "usage": result.usage}),
             }
         return {
-            "plan": steps,
+            "plan": result.steps,
             "current_step_idx": 0,
-            "trace": _log("Planner", "plan", {"steps": steps}),
+            "trace": _log("Planner", "plan", {"steps": result.steps, "usage": result.usage}),
         }
 
     def analyst_node(state: AgentState) -> dict:
@@ -78,7 +78,7 @@ def build_graph(llm: BaseChatModel):
                 "Analyst",
                 "generate_and_execute",
                 {"step": step, "code": output.code, "success": output.execution.success,
-                 "error": output.execution.error},
+                 "error": output.execution.error, "usage": output.usage},
             ),
         }
 
@@ -94,6 +94,7 @@ def build_graph(llm: BaseChatModel):
                 error=state["pending_error"],
             ),
             interpretation=state["pending_interpretation"],
+            usage={},
         )
         verdict = reviewer.review(output)
 

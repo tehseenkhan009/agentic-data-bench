@@ -77,11 +77,8 @@ def run_single(model: str, df: pd.DataFrame, question: str) -> BenchmarkResult:
     report_text = final_state.get("report", "")
     mentions = BENCHMARK_TASK["expected_category_mentioned"].lower() in report_text.lower()
 
-    # NOTE: token accounting is left as a placeholder (0) in this reference
-    # implementation — wire up llm.get_num_tokens / response.usage_metadata
-    # from the actual LangChain callbacks to populate this for real cost
-    # comparisons.
-    prompt_tokens, completion_tokens = 0, 0
+    prompt_tokens = sum(entry.get("usage", {}).get("prompt_tokens", 0) for entry in final_state["trace"])
+    completion_tokens = sum(entry.get("usage", {}).get("completion_tokens", 0) for entry in final_state["trace"])
 
     return BenchmarkResult(
         model=model,
