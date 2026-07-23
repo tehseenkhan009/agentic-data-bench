@@ -115,13 +115,14 @@ agentic-data-bench/
 │   ├── agents/               # one file per agent role
 │   ├── skills/                # reusable, testable capabilities agents call
 │   ├── guardrails.py          # centralized guardrail policy + enforcement
+│   ├── llm_providers.py       # routes a model name to OpenAI / Gemini / NVIDIA NIM
 │   └── graph.py                # LangGraph workflow definition
 ├── benchmarks/
 │   └── run_benchmark.py       # multi-model / multi-config evaluation harness
 ├── dashboard/
 │   ├── backend/                # FastAPI app + pure data.py (see Observability Dashboard above)
-│   └── frontend/                # React (Vite) trace timeline + benchmark history UI
-├── tests/                      # unit tests for guardrails, skills & dashboard data
+│   └── frontend/                # React (Vite) trace timeline, report & benchmark history UI
+├── tests/                      # unit tests for guardrails, skills, provider routing & dashboard data
 ├── data/sample_sales.csv       # toy dataset for the demo
 └── main.py                     # CLI entry point
 ```
