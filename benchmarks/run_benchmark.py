@@ -20,15 +20,20 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
 from src.graph import build_graph, initial_state
+from src.llm_providers import get_llm
 
 # Rough public per-1M-token pricing snapshot (USD) used only for *relative*
 # cost comparison in this demo — update before relying on absolute numbers.
+# Free-tier/preview models (Gemini free tier, NVIDIA NIM preview) are $0 while
+# that pricing holds; swap in paid-tier rates once that changes.
 MODEL_PRICING_PER_1M = {
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "gpt-4o": {"input": 2.50, "output": 10.00},
+    "gpt-4.1": {"input": 2.00, "output": 8.00},
+    "gemini-flash-lite-latest": {"input": 0.0, "output": 0.0},  # Google AI Studio free tier
+    "meta/llama-3.3-70b-instruct": {"input": 0.0, "output": 0.0},  # NVIDIA NIM free/preview tier
 }
 
 BENCHMARK_TASK = {
@@ -43,7 +48,7 @@ BENCHMARK_TASK = {
     "expected_category_mentioned": "Electronics",
 }
 
-MODEL_CONFIGS = ["gpt-4o-mini", "gpt-4o"]
+MODEL_CONFIGS = ["gpt-4o-mini", "gpt-4.1", "gemini-flash-lite-latest", "meta/llama-3.3-70b-instruct"]
 
 
 @dataclass
@@ -69,7 +74,7 @@ def _estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
 
 
 def run_single(model: str, df: pd.DataFrame, question: str, run_id: str) -> BenchmarkResult:
-    llm = ChatOpenAI(model=model, temperature=0)
+    llm = get_llm(model, temperature=0)
     app = build_graph(llm)
     state = initial_state(question, df)
 
@@ -125,7 +130,24 @@ def main() -> None:
     results = []
     for model in MODEL_CONFIGS:
         print(f"Running benchmark for model={model} ...")
-        result = run_single(model, df, BENCHMARK_TASK["question"], run_id)
+        try:
+            result = run_single(model, df, BENCHMARK_TASK["question"], run_id)
+        except Exception as e:  # noqa: BLE001 - one provider's outage/rate-limit shouldn't
+            # crash the whole benchmark run or lose results already computed for
+            # other models (nothing is persisted until the loop below finishes).
+            result = BenchmarkResult(
+                model=model,
+                success=False,
+                halted_reason=f"provider_error: {type(e).__name__}: {e}",
+                n_retries_total=0,
+                latency_seconds=0.0,
+                prompt_tokens=0,
+                completion_tokens=0,
+                estimated_cost_usd=0.0,
+                mentions_expected_category=False,
+                run_id=run_id,
+                timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            )
         results.append(result)
         print(f"  -> success={result.success} latency={result.latency_seconds}s retries={result.n_retries_total}")
 

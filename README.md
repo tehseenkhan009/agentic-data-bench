@@ -54,13 +54,29 @@ python main.py --data data/sample_sales.csv --question "Which product category h
 
 Output: a run trace in the console plus `outputs/report.md`.
 
+### Using other model providers
+
+`--model` accepts any of the following, picked by `src/llm_providers.py` from the name alone — no other flag needed:
+
+| Model name pattern | Provider | Example | Requires |
+|---|---|---|---|
+| anything else | OpenAI | `gpt-4o-mini`, `gpt-4.1` | `OPENAI_API_KEY` |
+| `gemini-*` | Google AI Studio | `gemini-flash-lite-latest` | `GOOGLE_API_KEY` (free tier — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) |
+| `org/model` (contains a `/`) | NVIDIA NIM (OpenAI-compatible) | `meta/llama-3.3-70b-instruct` | `NVIDIA_API_KEY` (free tier — [build.nvidia.com](https://build.nvidia.com)) |
+
+```bash
+python main.py --data data/sample_sales.csv --question "..." --model gemini-flash-lite-latest
+```
+
+Note on free tiers: Pro/full-size tiers (e.g. `gemini-2.5-pro`) typically have near-zero free quota and will 429 under this pipeline's multi-call-per-run load — Flash/Lite tiers (e.g. `gemini-flash-lite-latest`) have a much more usable free quota. NVIDIA NIM's free tier also enforces a low concurrent-request cap shared across models.
+
 ## Benchmarking models & configurations
 
 ```bash
 python benchmarks/run_benchmark.py
 ```
 
-This runs the same task across multiple model configurations (e.g. `gpt-4o-mini` vs `gpt-4o`, with/without the Reviewer loop) and scores each run on **correctness, guardrail pass rate, latency, and estimated token cost**, writing a comparison table to `benchmarks/results/`. The goal, per the job spec, is finding the smallest/cheapest model that still clears the quality bar — not just the most capable one.
+This runs the same task across multiple model configurations — by default `gpt-4o-mini`, `gpt-4.1`, `gemini-flash-lite-latest`, and `meta/llama-3.3-70b-instruct`, spanning three different providers — and scores each run on **correctness, guardrail pass rate, latency, and estimated token cost**, appending every run to `benchmarks/results/history.jsonl` (never overwritten) so trends across runs are visible, e.g. in the [Observability Dashboard](#observability-dashboard) below. The goal, per the job spec, is finding the smallest/cheapest model that still clears the quality bar — not just the most capable one. One provider's outage or rate limit doesn't take down the whole run: `run_benchmark.py` catches per-model errors and records them as a failed result rather than crashing.
 
 ## Observability Dashboard
 

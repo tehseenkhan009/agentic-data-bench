@@ -15,6 +15,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 import pandas as pd
 
 from src.skills import code_execution
+from src.llm_providers import get_text
 from src.llm_usage import usage_from_response, add_usage
 
 SYSTEM_PROMPT = """You are the Analyst agent in a governed multi-agent data-analysis system.
@@ -43,7 +44,7 @@ def _generate_code(llm: BaseChatModel, step: str, columns: list[str], feedback: 
     if feedback:
         prompt += f"\nYour previous attempt was rejected for: {feedback}\nFix it and try again.\n"
     response = llm.invoke([SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=prompt)])
-    code = response.content.strip()
+    code = get_text(response).strip()
     # strip accidental markdown fences
     if code.startswith("```"):
         code = code.strip("`")
@@ -56,7 +57,7 @@ def _generate_code(llm: BaseChatModel, step: str, columns: list[str], feedback: 
 def _interpret(llm: BaseChatModel, step: str, value) -> tuple[str, dict]:
     prompt = f"Step: {step}\nComputed result: {value!r}\n\nGive a one-sentence, plain-language interpretation."
     response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content.strip(), usage_from_response(response)
+    return get_text(response).strip(), usage_from_response(response)
 
 
 def analyze_step(

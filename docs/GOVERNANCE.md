@@ -22,7 +22,9 @@ Current guardrails:
 1. **Execution sandboxing** — Analyst-generated code runs through `skills/code_execution.py`, which:
    - only allows a fixed set of imports (`pandas`, `numpy`, `math`, `statistics`);
    - blocks `import os`, `import sys`, `subprocess`, `open(`, `eval(`, `exec(`, `__import__`;
+   - allows a small whitelist of pure, side-effect-free builtins (`len`, `float`, `int`, `str`, `bool`, `isinstance`, etc.) needed for ordinary correct code, while still excluding anything with I/O or process access;
    - runs with a wall-clock timeout.
+   - this guardrail is provider-agnostic: it applies to generated code regardless of which LLM (`src/llm_providers.py` routes OpenAI, Google Gemini, or NVIDIA NIM models) produced it — a capable model reaching for a library outside the whitelist (e.g. `scipy.stats` for significance testing) is rejected the same as any other model.
 2. **Static analysis gate** — every piece of generated code is scanned (`skills/static_analysis.py`) for banned patterns and cyclomatic-complexity outliers before it is allowed to run again in a later step.
 3. **Plausibility gate** — every numeric result is checked (`skills/plausibility_check.py`) against basic sanity bounds (e.g. percentages within [0,100], no `NaN`/`inf` results, growth rates within a configurable "surprising result" threshold that triggers extra scrutiny rather than auto-acceptance).
 4. **Retry ceiling** — the Analyst↔Reviewer loop is capped (default: 2 retries) to avoid infinite loops burning tokens; on ceiling breach the run halts and reports the failure to the user rather than silently returning a low-confidence answer.

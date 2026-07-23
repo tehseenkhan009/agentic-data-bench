@@ -55,7 +55,15 @@ def _run_restricted(code: str, df: pd.DataFrame) -> Any:
     """
     safe_builtins = {
         name: getattr(builtins, name)
-        for name in ("len", "range", "min", "max", "sum", "round", "sorted", "abs", "enumerate", "zip", "list", "dict")
+        for name in (
+            "len", "range", "min", "max", "sum", "round", "sorted", "abs", "enumerate", "zip",
+            "list", "dict", "tuple", "set",
+            # Pure, side-effect-free type constructors/checks — no I/O, no process/
+            # filesystem access, so they carry none of the risk `eval`/`exec`/`open`
+            # (already banned above) do. Their absence was rejecting ordinary,
+            # correct analysis code (e.g. `float(slope)`) as if it were a violation.
+            "float", "int", "str", "bool", "isinstance", "type",
+        )
     }
     restricted_globals = {
         "__builtins__": safe_builtins,

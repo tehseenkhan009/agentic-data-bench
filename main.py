@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
 from src.graph import build_graph, initial_state
+from src.llm_providers import get_llm
 
 
 def main() -> None:
@@ -24,15 +24,26 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Governed multi-agent data-analysis pipeline")
     parser.add_argument("--data", required=True, help="Path to a CSV file")
     parser.add_argument("--question", required=True, help="Natural-language analysis question")
-    parser.add_argument("--model", default="gpt-4o-mini", help="Chat model to use")
+    parser.add_argument(
+        "--model",
+        default="gpt-4o-mini",
+        help="Chat model to use: an OpenAI model name, a 'gemini-*' model (Google AI Studio), "
+        "or an 'org/model' NVIDIA NIM model (e.g. meta/llama-3.3-70b-instruct)",
+    )
     parser.add_argument("--output-dir", default="outputs", help="Where to write report.md and trace.json")
     args = parser.parse_args()
 
-    if not os.getenv("OPENAI_API_KEY"):
-        raise SystemExit("OPENAI_API_KEY not set. Copy .env.example to .env and fill it in.")
+    if args.model.startswith("gemini-"):
+        required_key = "GOOGLE_API_KEY"
+    elif "/" in args.model:
+        required_key = "NVIDIA_API_KEY"
+    else:
+        required_key = "OPENAI_API_KEY"
+    if not os.getenv(required_key):
+        raise SystemExit(f"{required_key} not set for model '{args.model}'. Copy .env.example to .env and fill it in.")
 
     df = pd.read_csv(args.data)
-    llm = ChatOpenAI(model=args.model, temperature=0)
+    llm = get_llm(args.model, temperature=0)
 
     app = build_graph(llm)
     state = initial_state(args.question, df)

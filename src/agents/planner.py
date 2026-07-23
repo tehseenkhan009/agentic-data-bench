@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.language_models.chat_models import BaseChatModel
 
+from src.llm_providers import get_text
 from src.llm_usage import usage_from_response
 
 SYSTEM_PROMPT = """You are the Planner agent in a governed multi-agent data-analysis system.
@@ -42,7 +43,7 @@ def plan(llm: BaseChatModel, question: str, columns: list[str]) -> PlanResult:
         "Return the numbered plan now."
     )
     response = llm.invoke([SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=prompt)])
-    lines = [line.strip() for line in response.content.splitlines() if line.strip()]
+    lines = [line.strip() for line in get_text(response).splitlines() if line.strip()]
     steps = []
     for line in lines:
         # strip "1. ", "1)", "- " style prefixes

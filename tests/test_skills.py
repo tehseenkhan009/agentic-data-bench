@@ -34,6 +34,15 @@ class TestCodeExecution:
         code_execution.run(code, sample_df)
         pd.testing.assert_frame_equal(sample_df, original)
 
+    def test_safe_type_builtins_are_available(self, sample_df):
+        # float/int/str/bool/isinstance/type are pure, side-effect-free and were
+        # previously missing from the whitelist, rejecting ordinary correct code
+        # (e.g. casting a computed value) as if it were a guardrail violation.
+        code = "result = float(df['revenue'].sum()) if isinstance(df, pd.DataFrame) else None"
+        res = code_execution.run(code, sample_df)
+        assert res.success
+        assert res.value == 350.0
+
     def test_eval_is_rejected(self, sample_df):
         code = "result = eval('1+1')"
         res = code_execution.run(code, sample_df)
