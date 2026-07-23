@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import TraceTimeline from "./components/TraceTimeline";
 import BenchmarkSummary from "./components/BenchmarkSummary";
+import ReportView from "./components/ReportView";
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -12,6 +13,7 @@ async function fetchJson(url) {
 export default function App() {
   const [tab, setTab] = useState("trace");
   const [trace, setTrace] = useState([]);
+  const [report, setReport] = useState("");
   const [history, setHistory] = useState([]);
   const [summary, setSummary] = useState({});
   const [error, setError] = useState(null);
@@ -21,11 +23,13 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const [traceData, benchmarkData] = await Promise.all([
+      const [traceData, reportData, benchmarkData] = await Promise.all([
         fetchJson("/api/trace"),
+        fetchJson("/api/report"),
         fetchJson("/api/benchmark-history"),
       ]);
       setTrace(traceData.trace ?? []);
+      setReport(reportData.report ?? "");
       setHistory(benchmarkData.history ?? []);
       setSummary(benchmarkData.summary ?? {});
     } catch (err) {
@@ -61,6 +65,13 @@ export default function App() {
         </button>
         <button
           type="button"
+          className={`tab-button ${tab === "report" ? "active" : ""}`}
+          onClick={() => setTab("report")}
+        >
+          Report
+        </button>
+        <button
+          type="button"
           className={`tab-button ${tab === "benchmark" ? "active" : ""}`}
           onClick={() => setTab("benchmark")}
         >
@@ -76,6 +87,8 @@ export default function App() {
           </div>
         ) : tab === "trace" ? (
           <TraceTimeline trace={trace} />
+        ) : tab === "report" ? (
+          <ReportView report={report} />
         ) : (
           <BenchmarkSummary history={history} summary={summary} />
         )}

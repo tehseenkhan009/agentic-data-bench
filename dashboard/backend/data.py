@@ -19,6 +19,14 @@ def load_trace(trace_path: Path) -> list[dict]:
     return json.loads(trace_path.read_text(encoding="utf-8"))
 
 
+def load_report(report_path: Path) -> str:
+    """Return the markdown report text from the most recent pipeline run, or
+    an empty string if the run hasn't happened yet."""
+    if not report_path.exists():
+        return ""
+    return report_path.read_text(encoding="utf-8")
+
+
 def load_benchmark_history(history_path: Path) -> list[dict]:
     """Return every benchmark result ever appended to history.jsonl, or an
     empty list if no benchmark has been run yet. Blank lines are skipped."""

@@ -309,3 +309,68 @@ table.runs-table td {
 .table-scroll {
   overflow-x: auto;
 }
+
+/* --- Report view --- */
+
+.report-view {
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.report-view h1 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.report-view h2 {
+  font-size: 18px;
+  margin: 24px 0 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gridline);
+}
+
+.report-view h3 {
+  font-size: 15px;
+  margin: 20px 0 8px;
+}
+
+.report-view p {
+  margin: 8px 0;
+  color: var(--text-secondary);
+}
+
+.report-view em {
+  color: var(--text-muted);
+}
+
+.report-view code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.report-view pre {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.report-view pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.report-view blockquote {
+  margin: 8px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--status-critical);
+  background: color-mix(in srgb, var(--status-critical) 8%, transparent);
+  color: var(--text-secondary);
+}

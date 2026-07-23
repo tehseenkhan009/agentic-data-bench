@@ -83,6 +83,7 @@ This runs the same task across multiple model configurations — by default `gpt
 A small local React + FastAPI dashboard visualizes the data this repo already produces — no new source of truth, just a visual layer on top of `outputs/trace.json` and `benchmarks/results/history.jsonl`:
 
 - **Trace timeline** — the step-by-step Planner → Analyst → Reviewer → Reporter trace from your most recent `python main.py ...` run, with pass/fail color coding and Analyst↔Reviewer retry loops grouped together.
+- **Report** — the final markdown report from that same run (`outputs/report.md`), rendered in place: each step's code, result, and natural-language interpretation, plus any outlier-scrutiny flags. The trace shows *how* the pipeline got there; the report shows *what* it concluded.
 - **Benchmark history** — every past `python benchmarks/run_benchmark.py` run (not just the latest), with per-model KPI cards (success rate, avg latency, avg cost, avg retries) and charts comparing models and trending latency/cost over time — the visual version of "find the smallest model that still clears the quality bar."
 
 Run the backend (from the repo root, with the project venv active):

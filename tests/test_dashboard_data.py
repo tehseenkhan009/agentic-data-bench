@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from dashboard.backend.data import aggregate_by_model, load_benchmark_history, load_trace
+from dashboard.backend.data import aggregate_by_model, load_benchmark_history, load_report, load_trace
 
 
 def test_load_trace_missing_file_returns_empty_list(tmp_path: Path) -> None:
@@ -19,6 +19,17 @@ def test_load_trace_parses_existing_file(tmp_path: Path) -> None:
     trace_path.write_text(json.dumps(entries), encoding="utf-8")
 
     assert load_trace(trace_path) == entries
+
+
+def test_load_report_missing_file_returns_empty_string(tmp_path: Path) -> None:
+    assert load_report(tmp_path / "does_not_exist.md") == ""
+
+
+def test_load_report_parses_existing_file(tmp_path: Path) -> None:
+    report_path = tmp_path / "report.md"
+    report_path.write_text("# Analysis Report\n\nSome findings.", encoding="utf-8")
+
+    assert load_report(report_path) == "# Analysis Report\n\nSome findings."
 
 
 def test_load_benchmark_history_missing_file_returns_empty_list(tmp_path: Path) -> None:
