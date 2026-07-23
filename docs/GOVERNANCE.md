@@ -44,6 +44,8 @@ Skills are pure functions with typed inputs/outputs and unit tests (`tests/`) �
 
 `src/graph.py` uses a single typed `AgentState` (TypedDict) threaded through every node. Every node appends a structured entry to `state["trace"]` (agent name, action, input hash, output, guardrail verdict, timestamp). This gives a full, replayable audit trail of a run — required for any process that has to explain *why* an agentic system produced a given answer.
 
+The `dashboard/` app (see README "Observability Dashboard") is the visual layer on top of this same data — it reads `outputs/trace.json` and `benchmarks/results/history.jsonl` directly, with no separate store, so the trace and benchmark history remain the single source of truth described above.
+
 ## 5. Change process (how this would work on a real team)
 
 1. Propose a new agent/skill/guardrail change as a PR against this file + its implementation.

@@ -4,21 +4,25 @@
     "success": true,
     "halted_reason": null,
     "n_retries_total": 1,
-    "latency_seconds": 10.04,
-    "prompt_tokens": 1844,
-    "completion_tokens": 438,
-    "estimated_cost_usd": 0.000539,
-    "mentions_expected_category": true
+    "latency_seconds": 11.71,
+    "prompt_tokens": 1855,
+    "completion_tokens": 468,
+    "estimated_cost_usd": 0.000559,
+    "mentions_expected_category": true,
+    "run_id": "428b22ee",
+    "timestamp": "2026-07-23T01:08:29+00:00"
   },
   {
     "model": "gpt-4o",
-    "success": true,
-    "halted_reason": null,
-    "n_retries_total": 0,
-    "latency_seconds": 2.69,
-    "prompt_tokens": 456,
-    "completion_tokens": 86,
-    "estimated_cost_usd": 0.002,
-    "mentions_expected_category": false
+    "success": false,
+    "halted_reason": "Step 'For each 'category', perform a time series analysis to determine the revenue growth trend over time.' failed QA after 2 retries: ['execution_error: ImportError: __import__ not found']",
+    "n_retries_total": 3,
+    "latency_seconds": 8.82,
+    "prompt_tokens": 1990,
+    "completion_tokens": 520,
+    "estimated_cost_usd": 0.010175,
+    "mentions_expected_category": false,
+    "run_id": "428b22ee",
+    "timestamp": "2026-07-23T01:08:38+00:00"
   }
 ]

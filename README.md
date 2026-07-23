@@ -62,6 +62,32 @@ python benchmarks/run_benchmark.py
 
 This runs the same task across multiple model configurations (e.g. `gpt-4o-mini` vs `gpt-4o`, with/without the Reviewer loop) and scores each run on **correctness, guardrail pass rate, latency, and estimated token cost**, writing a comparison table to `benchmarks/results/`. The goal, per the job spec, is finding the smallest/cheapest model that still clears the quality bar — not just the most capable one.
 
+## Observability Dashboard
+
+A small local React + FastAPI dashboard visualizes the data this repo already produces — no new source of truth, just a visual layer on top of `outputs/trace.json` and `benchmarks/results/history.jsonl`:
+
+- **Trace timeline** — the step-by-step Planner → Analyst → Reviewer → Reporter trace from your most recent `python main.py ...` run, with pass/fail color coding and Analyst↔Reviewer retry loops grouped together.
+- **Benchmark history** — every past `python benchmarks/run_benchmark.py` run (not just the latest), with per-model KPI cards (success rate, avg latency, avg cost, avg retries) and charts comparing models and trending latency/cost over time — the visual version of "find the smallest model that still clears the quality bar."
+
+Run the backend (from the repo root, with the project venv active):
+
+```bash
+pip install -r dashboard/backend/requirements.txt
+uvicorn dashboard.backend.main:app --reload --port 8000
+```
+
+Run the frontend (separate terminal):
+
+```bash
+cd dashboard/frontend
+npm install
+npm run dev
+```
+
+Then open the printed Vite URL (typically `http://localhost:5173`). The dashboard reads `outputs/trace.json` and `benchmarks/results/history.jsonl` directly off disk — run `main.py` and `benchmarks/run_benchmark.py` at least once first, and hit the Refresh button after each new run.
+
+![Observability Dashboard — Benchmark History view](docs/dashboard-screenshot.jpg)
+
 ## Project layout
 
 ```
@@ -75,7 +101,10 @@ agentic-data-bench/
 │   └── graph.py                # LangGraph workflow definition
 ├── benchmarks/
 │   └── run_benchmark.py       # multi-model / multi-config evaluation harness
-├── tests/                      # unit tests for guardrails & skills
+├── dashboard/
+│   ├── backend/                # FastAPI app + pure data.py (see Observability Dashboard above)
+│   └── frontend/                # React (Vite) trace timeline + benchmark history UI
+├── tests/                      # unit tests for guardrails, skills & dashboard data
 ├── data/sample_sales.csv       # toy dataset for the demo
 └── main.py                     # CLI entry point
 ```

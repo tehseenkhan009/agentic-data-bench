@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from dataclasses import dataclass, asdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -55,6 +57,8 @@ class BenchmarkResult:
     completion_tokens: int
     estimated_cost_usd: float
     mentions_expected_category: bool
+    run_id: str
+    timestamp: str
 
 
 def _estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
@@ -64,7 +68,7 @@ def _estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
     return (prompt_tokens / 1_000_000) * pricing["input"] + (completion_tokens / 1_000_000) * pricing["output"]
 
 
-def run_single(model: str, df: pd.DataFrame, question: str) -> BenchmarkResult:
+def run_single(model: str, df: pd.DataFrame, question: str, run_id: str) -> BenchmarkResult:
     llm = ChatOpenAI(model=model, temperature=0)
     app = build_graph(llm)
     state = initial_state(question, df)
@@ -90,30 +94,51 @@ def run_single(model: str, df: pd.DataFrame, question: str) -> BenchmarkResult:
         completion_tokens=completion_tokens,
         estimated_cost_usd=round(_estimate_cost(model, prompt_tokens, completion_tokens), 6),
         mentions_expected_category=mentions,
+        run_id=run_id,
+        timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
     )
+
+
+def write_latest(results: list[BenchmarkResult], out_dir: Path) -> Path:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "latest_run.json"
+    out_path.write_text(json.dumps([asdict(r) for r in results], indent=2), encoding="utf-8")
+    return out_path
+
+
+def append_history(results: list[BenchmarkResult], out_dir: Path) -> Path:
+    """Append each result as one JSON line to history.jsonl (never overwritten),
+    so the dashboard can show trends across benchmark runs over time."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    history_path = out_dir / "history.jsonl"
+    with history_path.open("a", encoding="utf-8") as f:
+        for r in results:
+            f.write(json.dumps(asdict(r)) + "\n")
+    return history_path
 
 
 def main() -> None:
     load_dotenv()
     df = pd.read_csv(BENCHMARK_TASK["data"])
+    run_id = uuid.uuid4().hex[:8]
 
     results = []
     for model in MODEL_CONFIGS:
         print(f"Running benchmark for model={model} ...")
-        result = run_single(model, df, BENCHMARK_TASK["question"])
+        result = run_single(model, df, BENCHMARK_TASK["question"], run_id)
         results.append(result)
         print(f"  -> success={result.success} latency={result.latency_seconds}s retries={result.n_retries_total}")
 
     out_dir = Path("benchmarks/results")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "latest_run.json"
-    out_path.write_text(json.dumps([asdict(r) for r in results], indent=2), encoding="utf-8")
+    latest_path = write_latest(results, out_dir)
+    history_path = append_history(results, out_dir)
 
     print("\n--- Benchmark summary ---")
     print(f"{'model':<15}{'success':<10}{'retries':<10}{'latency(s)':<12}{'category_ok':<12}")
     for r in results:
         print(f"{r.model:<15}{str(r.success):<10}{r.n_retries_total:<10}{r.latency_seconds:<12}{str(r.mentions_expected_category):<12}")
-    print(f"\nFull results written to {out_path}")
+    print(f"\nFull results written to {latest_path}")
+    print(f"Appended to history: {history_path}")
 
 
 if __name__ == "__main__":
