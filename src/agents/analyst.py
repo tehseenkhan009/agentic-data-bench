@@ -27,6 +27,9 @@ Hard rules (violating these will cause your code to be rejected before it even r
 - Only use pandas (`pd`), numpy (`np`), math, statistics. No other imports.
 - Never use os, sys, subprocess, eval, exec, open, input, network calls.
 - Never mutate `df` in place; treat it as read-only.
+- If the step refers to a value from a previous step (e.g. "the identified region", \
+"that category"), use the actual value shown under "Results from previous steps" below \
+- never a placeholder string.
 - Output ONLY the Python code, no markdown fences, no explanation.
 """
 
@@ -39,8 +42,20 @@ class AnalystOutput:
     usage: dict
 
 
-def _generate_code(llm: BaseChatModel, step: str, columns: list[str], feedback: str | None) -> tuple[str, dict]:
-    prompt = f"Dataframe columns: {columns}\n\nStep: {step}\n"
+def _generate_code(
+    llm: BaseChatModel,
+    step: str,
+    columns: list[str],
+    feedback: str | None,
+    prior_results: list[dict] | None = None,
+) -> tuple[str, dict]:
+    prompt = f"Dataframe columns: {columns}\n\n"
+    if prior_results:
+        prompt += "Results from previous steps (use these actual values, not placeholders):\n"
+        for i, prior in enumerate(prior_results, start=1):
+            prompt += f"- Step {i} ({prior['step']}): {prior['result']!r}\n"
+        prompt += "\n"
+    prompt += f"Step: {step}\n"
     if feedback:
         prompt += f"\nYour previous attempt was rejected for: {feedback}\nFix it and try again.\n"
     response = llm.invoke([SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=prompt)])
@@ -65,8 +80,9 @@ def analyze_step(
     step: str,
     df: pd.DataFrame,
     feedback: str | None = None,
+    prior_results: list[dict] | None = None,
 ) -> AnalystOutput:
-    code, code_usage = _generate_code(llm, step, list(df.columns), feedback)
+    code, code_usage = _generate_code(llm, step, list(df.columns), feedback, prior_results)
     execution = code_execution.run(code, df)
     if execution.success:
         interpretation, interpret_usage = _interpret(llm, step, execution.value)

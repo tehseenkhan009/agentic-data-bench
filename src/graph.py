@@ -67,7 +67,9 @@ def build_graph(llm: BaseChatModel):
 
     def analyst_node(state: AgentState) -> dict:
         step = state["plan"][state["current_step_idx"]]
-        output = analyst.analyze_step(llm, step, state["df"], feedback=state.get("feedback"))
+        output = analyst.analyze_step(
+            llm, step, state["df"], feedback=state.get("feedback"), prior_results=state["step_results"]
+        )
         return {
             "pending_code": output.code,
             "pending_success": output.execution.success,
